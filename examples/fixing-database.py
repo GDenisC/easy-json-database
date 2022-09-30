@@ -19,7 +19,7 @@ encode_database('test.json', Database.ENCODE_ZLIB_MAX)
 Database.ENCODE_NONE -> Database.ENCODE_ZLIB_MAX
 """
 
-db = Database('test.json', indent=4)
+db = Database('test.json')
 db.setCoderType(db.ENCODE_ZLIB_MAX)
 db.loadFile() # works!
 
