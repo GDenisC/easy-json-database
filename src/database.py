@@ -15,7 +15,7 @@ class EncodeTypes:
     ENCODE_ZLIB_MAX: int = 0x20
     
     @staticmethod
-    def parseCoderType(encode: int) -> tuple[Callable, Callable]:
+    def parseCoderType(encode: int) -> Optional[tuple[Callable, Callable]]:
         if encode == Database.ENCODE_NONE:
             return (
                 lambda bts: bts,
@@ -45,7 +45,7 @@ class Database(dict, EncodeTypes):
     _decoder: Callable[[bytes], bytes]
     indent: int | None
 
-    def __init__(self, /, filename: str, indent: int = None) -> None:
+    def __init__(self, filename: str, indent: int = None) -> None:
         super().__init__()
         self.filename = filename
         self.indent = indent
@@ -53,7 +53,7 @@ class Database(dict, EncodeTypes):
         self._encoder = lambda bts: bts
         self._decoder = lambda bts: bts
     
-    def loadFile(self, /, encoding: str = DEFAULT_ENCODING) -> None:
+    def loadFile(self, encoding: str = DEFAULT_ENCODING) -> None:
         with open(self.filename, 'rb') as fb:
             self.update(
                 json.loads(
@@ -61,9 +61,9 @@ class Database(dict, EncodeTypes):
                 )
             )
 
-    def setCoderType(self, encode: int = EncodeTypes.ENCODE_NONE, /, encoder: Callable[[bytes], bytes] = None, decoder: Callable[[bytes], bytes] = None) -> None:
+    def setCoderType(self, encode: int = EncodeTypes.ENCODE_NONE, *, encoder: Callable[[bytes], bytes] = None, decoder: Callable[[bytes], bytes] = None) -> None:
         if encoder and decoder:
-            if not isinstance(encoder, Callable[[bytes], bytes]) and isinstance(decoder, Callable[[bytes], bytes]):
+            if not isinstance(encoder, Callable) and isinstance(decoder, Callable):
                 raise DatabaseWrongCoding()
             
             self._encoder = encoder
@@ -74,7 +74,7 @@ class Database(dict, EncodeTypes):
         self._encoder: Callable[[bytes], bytes] = c[0]
         self._decoder: Callable[[bytes], bytes] = c[1]
     
-    def save(self, /, ensure_ascii: bool = False, encoding: str = DEFAULT_ENCODING) -> None:
+    def save(self, *, ensure_ascii: bool = False, encoding: str = DEFAULT_ENCODING) -> None:
         with open(self.filename, 'wb') as fb:
             fb.write(
                 self._encoder(
@@ -88,7 +88,7 @@ class Database(dict, EncodeTypes):
     def __exit__(self, *args, **kwargs):
         self.save()
 
-def decode_database(db: str, encode: int = EncodeTypes.ENCODE_NONE, /, encoding: str = DEFAULT_ENCODING, ensure_ascii: bool = False, indent: int = None) -> None:
+def decode_database(db: str, encode: int = EncodeTypes.ENCODE_NONE, *, encoding: str = DEFAULT_ENCODING, ensure_ascii: bool = False, indent: int = None) -> None:
     with open(db, 'rb') as fb:
         dat = json.loads(
                 EncodeTypes.parseCoderType(encode)[1](fb.read()).decode(DEFAULT_ENCODING)
@@ -97,7 +97,7 @@ def decode_database(db: str, encode: int = EncodeTypes.ENCODE_NONE, /, encoding:
     with open(db, 'w', encoding=encoding) as f:
         json.dump(dat, f, ensure_ascii=ensure_ascii, indent=indent) 
 
-def encode_database(db: str, encode: int = EncodeTypes.ENCODE_NONE, /, encoding: str = DEFAULT_ENCODING, ensure_ascii: bool = False, indent: int = None) -> None:
+def encode_database(db: str, encode: int = EncodeTypes.ENCODE_NONE, *, encoding: str = DEFAULT_ENCODING, ensure_ascii: bool = False, indent: int = None) -> None:
     with open(db, 'r') as f:
         dat = json.load(f)
 
